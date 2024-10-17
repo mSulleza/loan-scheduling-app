@@ -1,5 +1,7 @@
 import datetime
 
+import pandas as pd
+
 
 def generate_loan_schedule(release_date, term, frequency):
     schedule = []
@@ -41,24 +43,22 @@ def generate_loan_schedule(release_date, term, frequency):
     return schedule
 
 def generate_amortization_schedule(loan_amount, interest_rate, schedule, term):
-    interest_amount = 0
-    principal_amount = 0
-    total_payment = 0
+    interest_amount = loan_amount * interest_rate * term
+    principal_amount = loan_amount / len(schedule)
     amortization_schedule = []
+
+    for payment_date in schedule:
+        amortization_schedule.append({
+            "payment_date": payment_date,
+            "interest_amount": interest_amount / len(schedule),
+            "principal_amount": principal_amount,
+            "total_payment": principal_amount + interest_amount / len(schedule)
+        })
     
     return amortization_schedule
-        
 
-def main():
-    print("Finance Schedule Generator")
-    start_date = datetime.datetime(2024, 1, 1)
-    frequency = "bi-weekly"
-    term = 6
-    schedule = generate_loan_schedule(start_date, term, frequency)
-    print(len(schedule))
-    amortization_schedule = generate_amortization_schedule(100000, 0.035, schedule, term)
-    for amortization in amortization_schedule:
-        print(amortization)
-
-if __name__ == "__main__":
-    main()
+## This is the main function to generate the amortization schedule
+def generate_loan_amortization_schedule_df(loan_amount, interest_rate, release_date, term, frequency):
+    schedule = generate_loan_schedule(release_date, term, frequency)
+    amortization_schedule = generate_amortization_schedule(loan_amount, interest_rate, schedule, term)
+    return amortization_schedule
