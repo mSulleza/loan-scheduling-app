@@ -27,15 +27,20 @@ def generate_release_strategy(recurring_investment, start_date, month_to_generat
         current_investment_pool += recurring_investment
         new_client = []
         paying_clients = []
+        
         if current_investment_pool >= minimum_release_amount:
             # release the loan to a client
             max_loan_amount = int(current_investment_pool // minimum_release_amount)
+            release_year = current_year
             for j in range (max_loan_amount):
                 if (current_month + 1) % 12 == 0:
                     release_month = 12
                 else:
                     release_month = (current_month + 1) % 12
-                release_date = datetime.datetime(current_year, release_month, 1)
+                    if (release_month == 1):
+                        release_year += 1
+                    
+                release_date = datetime.datetime(release_year, release_month, 1)
                 loan_schedule = generate_loan_amortization_schedule_df(minimum_release_amount, interest_rate, release_date, term, frequency)
                 loan_schedule_df = pd.DataFrame(loan_schedule)
                 
@@ -54,11 +59,12 @@ def generate_release_strategy(recurring_investment, start_date, month_to_generat
                         "loan_schedule": loan_schedule
                     })
                     new_client.append("Client " + str(client_index))
+                    client_index += 1
                     
                 total_interest_paid += loan_schedule_df["interest_amount"].sum()
                 
                 current_investment_pool -= minimum_release_amount
-                client_index += 1
+                
             
         recurring_payment = 0
         # check as well if there is already a payment due for this month
@@ -72,10 +78,10 @@ def generate_release_strategy(recurring_investment, start_date, month_to_generat
             # add client to the list if the loan is paying
             if is_paying:
                 paying_clients.append(client["client"])
+        
+        for client in clients:        
             # remove client from the list if the loan is paid
-            print("Checking client: ", client["client"])
-            print("Loan schedule: ", client["loan_schedule"][-1]["payment_date"])
-            if client["loan_schedule"][-1]["payment_date"].month == current_month and client["loan_schedule"][-1]["payment_date"].year < current_year:
+            if client["loan_schedule"][-1]["payment_date"].month == current_month and client["loan_schedule"][-1]["payment_date"].year == current_year:
                 print("For renewal of loan: ", client["client"])
                 done_clients.append(client)
                 clients.remove(client)
@@ -87,10 +93,9 @@ def generate_release_strategy(recurring_investment, start_date, month_to_generat
                 "investment_pool": f"{current_investment_pool:.2f}",
                 "number_of_clients": len(paying_clients),
                 "new_client": new_client,
+                "paying_clients": paying_clients,
                 "release_amount": f"{minimum_release_amount * max_loan_amount:.2f}",
                 "payments_received": f"{recurring_payment:.2f}",
-                "done_clients": len(done_clients),
-                # "paying_clients": paying_clients
             })
                     
         # increment the month and year

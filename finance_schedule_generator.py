@@ -1,45 +1,32 @@
 import datetime
-
 import pandas as pd
-
 
 def generate_loan_schedule(release_date, term, frequency):
     schedule = []
     end_date = release_date + datetime.timedelta(days=term * 30)
     date_diff = end_date - release_date
-    num_payments = 0
-    first_payment_date = release_date
     
     if frequency == "monthly":
         num_payments = date_diff.days // 30
-        first_payment_date = release_date + datetime.timedelta(days=30)
+        interval = datetime.timedelta(days=30)
     elif frequency == "weekly":
         num_payments = date_diff.days // 7
-        first_payment_date = release_date + datetime.timedelta(days=7)
+        interval = datetime.timedelta(days=7)
     elif frequency == "bi-weekly":
         num_payments = date_diff.days // 15
-        first_payment_date = release_date + datetime.timedelta(days=14)
+        interval = datetime.timedelta(days=15)
     elif frequency == "daily":
         num_payments = date_diff.days
-        first_payment_date = release_date
+        interval = datetime.timedelta(days=1)
     else:
         raise ValueError("Invalid frequency")
-    
-    for i in range(num_payments):
-        if frequency == "monthly":
-            multiplier = 30
-        elif frequency == "weekly":
-            multiplier = 7
-        elif frequency == "bi-weekly":
-            multiplier = 15
-        elif frequency == "daily":
-            multiplier = 1
-        else:
-            raise ValueError("Invalid frequency")
-        
-        payment_date = first_payment_date + (datetime.timedelta(days=i * multiplier))
+
+    # Start scheduling from the first payment date
+    payment_date = release_date + interval
+    for _ in range(num_payments):
         schedule.append(payment_date)
-        
+        payment_date += interval  # Increment by the interval each time
+    
     return schedule
 
 def generate_amortization_schedule(loan_amount, interest_rate, schedule, term):
